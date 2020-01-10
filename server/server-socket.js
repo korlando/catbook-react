@@ -1,56 +1,51 @@
-let io, socketmap;
+let io;
 
-// remove duplicate users from a list
-const removeDuplicates = (users) => {
-  const seen = {}; // set of users we've seen already
+const userToSocketMap = {}; // maps user ID to socket ID
+const socketToUserMap = {}; // maps socket ID to userID
 
-  for (const user of users) {
-    if (!(user._id in seen)) {
-      seen[user._id] = user;
-    }
+const getAllConnectedUsers = () => Object.values(socketToUserMap);
+const getSocketFromUserID = (userid) => userToSocketMap[userid];
+const getUserFromSocketID = (socketid) => socketToUserMap[socketid];
+const getSocketFromSocketID = (socketid) => io.sockets.connected[socketid];
+
+const addUser = (user, socketid) => {
+  const oldSocket = userToSocketMap[user._id];
+  if (oldSocket && oldSocket != socketid) {
+    // there was an old tab open for this user, force it to disconnect
+    io.to(oldSocket).emit("forceDisconnect");
+    delete socketToUserMap[oldSocket];
   }
 
-  return Object.values(seen);
+  userToSocketMap[user._id] = socketid;
+  socketToUserMap[socketid] = user;
+  io.emit("activeUsers", { activeUsers: getAllConnectedUsers() });
 };
 
-const getAllConnectedUsers = () => {
-  let activeUsers = Object.values(io.sockets.connected)
-    .map((sock) => sock.user)
-    .filter((val) => val != undefined);
-  return { activeUsers: removeDuplicates(activeUsers) };
-};
-
-const getSocketFromSocketID = (socketid) => {
-  return io.sockets.connected[socketid];
+const removeUser = (user, socketid) => {
+  if (user) delete userToSocketMap[user.id];
+  delete socketToUserMap[socketid];
+  io.emit("activeUsers", { activeUsers: getAllConnectedUsers() });
 };
 
 module.exports = {
   init: (http) => {
     io = require("socket.io")(http);
-    // maps user id to socket id
-    socketmap = {};
+
     io.on("connection", (socket) => {
       console.log(`socket has connected ${socket.id}`);
       socket.on("disconnect", (reason) => {
-        io.emit("activeUsers", getAllConnectedUsers());
+        const user = getUserFromSocketID(socket.id);
+        removeUser(user, socket.id);
       });
     });
   },
 
-  addUser: (user, socketid) => {
-    const socket = getSocketFromSocketID(socketid);
-    socket.user = user;
+  addUser: addUser,
+  removeUser: removeUser,
 
-    // every tab open by this user joins a "room"
-    socket.join(user._id);
-
-    socketmap[user._id] = socketid;
-    io.emit("activeUsers", getAllConnectedUsers());
-  },
-
-  getSocketFromUserID: (user) => socketmap[user],
+  getSocketFromUserID: getSocketFromUserID,
+  getUserFromSocketID: getUserFromSocketID,
   getSocketFromSocketID: getSocketFromSocketID,
-
   getAllConnectedUsers: getAllConnectedUsers,
   getIo: () => io,
 };

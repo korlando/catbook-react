@@ -38,7 +38,6 @@ class Chatbook extends Component {
         recipient: ALL_CHAT,
         messages: [],
       },
-      showModal: false,
     };
   }
 
@@ -102,7 +101,7 @@ class Chatbook extends Component {
 
     return (
       <>
-        <Modal show={this.state.showModal} />
+        <Modal show={this.props.socketDisconnected} message="You have disconnected" />
         <div className="u-flex u-relative Chatbook-container">
           <div className="Chatbook-userList">
             <ChatList
@@ -111,6 +110,9 @@ class Chatbook extends Component {
               users={this.state.activeUsers}
               active={this.state.activeChat.recipient}
             />
+          </div>
+          <div className="Chatbook-chatContainer u-relative">
+            <Chat data={this.state.activeChat} />
           </div>
         </div>
       </>
@@ -121,6 +123,7 @@ class Chatbook extends Component {
 const mapStateToProps = (state) => {
   return {
     userId: state.user.userId,
+    socketDisconnected: state.socket.socketDisconnected,
   };
 };
 
