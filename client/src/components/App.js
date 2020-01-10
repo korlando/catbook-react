@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import NavBar from "./modules/NavBar.js";
 import { Router } from "@reach/router";
+import { connect } from "react-redux";
 import Feed from "./pages/Feed.js";
 import NotFound from "./pages/NotFound.js";
 import Profile from "./pages/Profile.js";
@@ -9,6 +10,8 @@ import Chatbook from "./pages/Chatbook.js";
 import { socket } from "../client-socket.js";
 
 import { get, post } from "../utilities";
+
+import * as userActions from "../actions/userActions";
 
 // to use styles, import the necessary CSS files
 import "../utilities.css";
@@ -30,6 +33,7 @@ class App extends Component {
     get("/api/whoami").then((user) => {
       if (user._id) {
         // they are registed in the database, and currently logged in.
+        this.props.updateUserId(user._id);
         this.setState({ userId: user._id });
       }
     });
@@ -74,4 +78,14 @@ class App extends Component {
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {};
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    updateUserId: (userId) => dispatch(userActions.updateUserId(userId)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);
