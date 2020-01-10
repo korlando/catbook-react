@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import SingleStory from "./SingleStory.js";
 import CommentsBlock from "./CommentsBlock.js";
 import { get } from "../../utilities";
+import { connect } from "react-redux";
 
 import "./Card.css";
 
@@ -58,4 +59,10 @@ class Card extends Component {
   }
 }
 
-export default Card;
+const mapStateToProps = (state) => {
+  return {
+    userId: state.user.userId,
+  };
+};
+
+export default connect(mapStateToProps)(Card);

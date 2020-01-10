@@ -1,15 +1,15 @@
 import React, { Component } from "react";
 import Card from "../modules/Card.js";
 import { NewStory } from "../modules/NewPostInput.js";
+import { connect } from 'react-redux';
+
+import * as storyActions from "../../actions/storyActions"
 
 import { get } from "../../utilities";
 
 class Feed extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      stories: [],
-    };
   }
 
   // called when the "Feed" component "mounts", i.e.
@@ -17,33 +17,29 @@ class Feed extends Component {
   componentDidMount() {
     document.title = "News Feed";
     get("/api/stories").then((storyObjs) => {
-      let reversedStoryObjs = storyObjs.reverse();
-      reversedStoryObjs.map((storyObj) => {
-        this.setState({ stories: this.state.stories.concat([storyObj]) });
-      });
+      storyObjs.reverse();
+      this.props.initializeStories(storyObjs);
     });
   }
 
   // this gets called when the user pushes "Submit", so their
   // post gets added to the screen right away
   addNewStory = (storyObj) => {
-    this.setState({
-      stories: [storyObj].concat(this.state.stories),
-    });
+    this.props.addNewStory(storyObj);
   };
 
   render() {
+    const { stories } = this.props;
     let storiesList = null;
-    const hasStories = this.state.stories.length !== 0;
+    const hasStories = stories.length !== 0;
     if (hasStories) {
-      storiesList = this.state.stories.map((storyObj) => (
+      storiesList = stories.map((storyObj) => (
         <Card
           key={`Card_${storyObj._id}`}
           _id={storyObj._id}
           creator_name={storyObj.creator_name}
           creator_id={storyObj.creator_id}
           content={storyObj.content}
-          userId={this.props.userId}
         />
       ));
     } else {
@@ -58,4 +54,18 @@ class Feed extends Component {
   }
 }
 
-export default Feed;
+const mapStateToProps = (state) => {
+  return {
+    userId: state.user.userId,
+    stories: state.story.stories,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    addNewStory: (story) => dispatch(storyActions.addNewStory(story)),
+    initializeStories: (stories) => dispatch(storyActions.initializeStories(stories)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Feed);

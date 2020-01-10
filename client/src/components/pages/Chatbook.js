@@ -4,6 +4,7 @@ import Modal from "../modules/Modal.js";
 import Chat from "../modules/Chat.js";
 import { socket } from "../../client-socket.js";
 import { get } from "../../utilities";
+import { connect } from "react-redux";
 
 import "./Chatbook.css";
 
@@ -94,7 +95,10 @@ class Chatbook extends Component {
   };
 
   render() {
-    if (!this.props.userId) return <div>Log in before using Chatbook</div>;
+    const { userId } = this.props;
+    if (!userId) {
+      return <div>Log in before using Chatbook</div>;
+    }
 
     return (
       <>
@@ -103,7 +107,7 @@ class Chatbook extends Component {
           <div className="Chatbook-userList">
             <ChatList
               setActiveUser={this.setActiveUser}
-              userId={this.props.userId}
+              userId={userId}
               users={this.state.activeUsers}
               active={this.state.activeChat.recipient}
             />
@@ -114,4 +118,10 @@ class Chatbook extends Component {
   }
 }
 
-export default Chatbook;
+const mapStateToProps = (state) => {
+  return {
+    userId: state.user.userId,
+  };
+};
+
+export default connect(mapStateToProps)(Chatbook);

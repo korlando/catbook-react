@@ -7,9 +7,7 @@ import NotFound from "./pages/NotFound.js";
 import Profile from "./pages/Profile.js";
 import Chatbook from "./pages/Chatbook.js";
 
-import { socket } from "../client-socket.js";
-
-import { get, post } from "../utilities";
+import { get } from "../utilities";
 
 import * as userActions from "../actions/userActions";
 
@@ -24,9 +22,6 @@ class App extends Component {
   // makes props available in this component
   constructor(props) {
     super(props);
-    this.state = {
-      userId: undefined,
-    };
   }
 
   componentDidMount() {
@@ -34,24 +29,9 @@ class App extends Component {
       if (user._id) {
         // they are registed in the database, and currently logged in.
         this.props.updateUserId(user._id);
-        this.setState({ userId: user._id });
       }
     });
   }
-
-  handleLogin = (res) => {
-    console.log(`Logged in as ${res.profileObj.name}`);
-    const userToken = res.tokenObj.id_token;
-    post("/api/login", { token: userToken }).then((user) => {
-      this.setState({ userId: user._id });
-      post("/api/initsocket", { socketid: socket.id });
-    });
-  };
-
-  handleLogout = () => {
-    this.setState({ userId: undefined });
-    post("/api/logout");
-  };
 
   // required method: whatever is returned defines what
   // shows up on screen
@@ -60,16 +40,12 @@ class App extends Component {
       // <> is like a <div>, but won't show
       // up in the DOM tree
       <>
-        <NavBar
-          handleLogin={this.handleLogin}
-          handleLogout={this.handleLogout}
-          userId={this.state.userId}
-        />
+        <NavBar />
         <div className="App-container">
           <Router>
-            <Feed path="/" userId={this.state.userId} />
+            <Feed path="/" />
             <Profile path="/profile/:userId" />
-            <Chatbook path="/chat/" userId={this.state.userId} />
+            <Chatbook path="/chat/" />
             <NotFound default />
           </Router>
         </div>

@@ -1,6 +1,11 @@
 import React, { Component } from "react";
 import { Link } from "@reach/router";
 import GoogleLogin, { GoogleLogout } from "react-google-login";
+import { connect } from 'react-redux';
+import * as userActions from "../../actions/userActions";
+
+import { post } from "../../utilities";
+import { socket } from "../../client-socket.js";
 
 import "./NavBar.css";
 
@@ -15,7 +20,22 @@ class NavBar extends Component {
     super(props);
   }
 
+  handleLogin = (res) => {
+    console.log(`Logged in as ${res.profileObj.name}`);
+    const userToken = res.tokenObj.id_token;
+    post("/api/login", { token: userToken }).then((user) => {
+      this.props.updateUserId(user._id);
+      post("/api/initsocket", { socketid: socket.id });
+    });
+  };
+
+  handleLogout = () => {
+    this.props.updateUserId(undefined);
+    post("/api/logout");
+  };
+
   render() {
+    const { userId } = this.props;
     return (
       <nav className="NavBar-container">
         <div className="NavBar-title u-inlineBlock">Catbook</div>
@@ -23,19 +43,19 @@ class NavBar extends Component {
           <Link to="/" className="NavBar-link">
             Home
           </Link>
-          {this.props.userId && (
-            <Link to={`/profile/${this.props.userId}`} className="NavBar-link">
+          {userId && (
+            <Link to={`/profile/${userId}`} className="NavBar-link">
               Profile
             </Link>
           )}
           <Link to="/chat/" className="NavBar-link">
             Chat
           </Link>
-          {this.props.userId ? (
+          {userId ? (
             <GoogleLogout
               clientId={GOOGLE_CLIENT_ID}
               buttonText="Logout"
-              onLogoutSuccess={this.props.handleLogout}
+              onLogoutSuccess={this.handleLogout}
               onFailure={(err) => console.log(err)}
               className="NavBar-link NavBar-login"
             />
@@ -43,7 +63,7 @@ class NavBar extends Component {
             <GoogleLogin
               clientId={GOOGLE_CLIENT_ID}
               buttonText="Login"
-              onSuccess={this.props.handleLogin}
+              onSuccess={this.handleLogin}
               onFailure={(err) => console.log(err)}
               className="NavBar-link NavBar-login"
             />
@@ -54,4 +74,16 @@ class NavBar extends Component {
   }
 }
 
-export default NavBar;
+const mapStateToProps = (state) => {
+  return {
+    userId: state.user.userId,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    updateUserId: (userId) => dispatch(userActions.updateUserId(userId)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(NavBar);

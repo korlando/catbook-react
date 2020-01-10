@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import CatHappiness from "../modules/CatHappiness.js";
 import { get } from "../../utilities";
+import { connect } from "react-redux";
+
+import * as userActions from "../../actions/userActions";
 
 import "../../utilities.css";
 import "./Profile.css";
@@ -9,14 +12,13 @@ class Profile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: undefined,
       catHappiness: 0,
     };
   }
 
   componentDidMount() {
     document.title = "Profile Page";
-    get(`/api/user`, { userid: this.props.userId }).then((user) => this.setState({ user: user }));
+    get(`/api/user`, { userid: this.props.userId }).then((user) => this.props.updateUser(user));
   }
 
   incrementCatHappiness = () => {
@@ -26,7 +28,8 @@ class Profile extends Component {
   };
 
   render() {
-    if (!this.state.user) {
+    const { user } = this.props;
+    if (!user) {
       return <div> Loading! </div>;
     }
     return (
@@ -39,7 +42,7 @@ class Profile extends Component {
         >
           <div className="Profile-avatar" />
         </div>
-        <h1 className="Profile-name u-textCenter">{this.state.user.name}</h1>
+        <h1 className="Profile-name u-textCenter">{user.name}</h1>
         <hr className="Profile-line" />
         <div className="u-flex">
           <div className="Profile-subContainer u-textCenter">
@@ -62,4 +65,17 @@ class Profile extends Component {
   }
 }
 
-export default Profile;
+const mapStateToProps = (state) => {
+  return {
+    user: state.user.user,
+    userId: state.user.userId,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    updateUser: (user) => dispatch(userActions.updateUser(user)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Profile);
