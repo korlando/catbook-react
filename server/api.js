@@ -67,18 +67,18 @@ router.get("/whoami", (req, res) => {
 });
 
 router.get("/user", (req, res) => {
-  User.findById(req.query.userid).then((user) => {
+  User.findById(req.query.userId).then((user) => {
     res.send(user);
   });
 });
 
 router.post("/initsocket", (req, res) => {
   // do nothing if user not logged in
-  if (req.user) socket.addUser(req.user, req.body.socketid);
+  if (req.user) socket.addUser(req.user, socket.getSocketFromSocketID(req.body.socketid));
   res.send({});
 });
 
-router.get("/messages", (req, res) => {
+router.get("/chat", (req, res) => {
   let query;
   if (req.query.recipient_id === "ALL_CHAT") {
     // get any message sent by anybody to ALL_CHAT
@@ -96,7 +96,7 @@ router.get("/messages", (req, res) => {
   Message.find(query).then((messages) => res.send(messages));
 });
 
-router.post("/chat", auth.ensureLoggedIn, (req, res) => {
+router.post("/message", auth.ensureLoggedIn, (req, res) => {
   console.log(`Received a chat message from ${req.user.name}: ${req.body.content}`);
 
   // insert this message into the database
@@ -111,16 +111,10 @@ router.post("/chat", auth.ensureLoggedIn, (req, res) => {
   message.save();
 
   if (req.body.recipient._id == "ALL_CHAT") {
-    socket.getIo().emit("chat", message);
+    socket.getIo().emit("message", message);
   } else {
-    socket
-      .getIo()
-      .to(socket.getSocketFromUserID(req.body.recipient._id))
-      .emit("chat", message);
-    socket
-      .getIo()
-      .to(socket.getSocketFromUserID(req.user._id))
-      .emit("chat", message);
+    socket.getSocketFromUserID(req.body.recipient._id).emit("message", message);
+    socket.getSocketFromUserID(req.user._id).emit("message", message);
   }
 });
 

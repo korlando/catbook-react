@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import ChatList from "../modules/ChatList.js";
-import Modal from "../modules/Modal.js";
 import Chat from "../modules/Chat.js";
 import { socket } from "../../client-socket.js";
 import { get } from "../../utilities";
@@ -42,7 +41,7 @@ class Chatbook extends Component {
   }
 
   loadMessageHistory(recipient) {
-    get("/api/messages", { recipient_id: recipient._id }).then((messages) => {
+    get("/api/chat", { recipient_id: recipient._id }).then((messages) => {
       this.setState({
         activeChat: {
           recipient: recipient,
@@ -63,10 +62,13 @@ class Chatbook extends Component {
       });
     });
 
-    socket.on("chat", (data) => {
+    socket.on("message", (data) => {
       if (
-        data.recipient._id === this.state.activeChat.recipient._id ||
-        data.sender._id === this.state.activeChat.recipient._id
+        (data.recipient._id === this.state.activeChat.recipient._id &&
+          data.sender._id === this.props.userId) ||
+        (data.sender._id === this.state.activeChat.recipient._id &&
+          data.recipient._id === this.props.userId) ||
+        (data.recipient._id === "ALL_CHAT" && this.state.activeChat.recipient._id === "ALL_CHAT")
       ) {
         this.setState((prevstate) => ({
           activeChat: {
@@ -101,12 +103,10 @@ class Chatbook extends Component {
 
     return (
       <>
-        <Modal show={this.props.socketDisconnected} message="You have disconnected" />
         <div className="u-flex u-relative Chatbook-container">
           <div className="Chatbook-userList">
             <ChatList
               setActiveUser={this.setActiveUser}
-              userId={userId}
               users={this.state.activeUsers}
               active={this.state.activeChat.recipient}
             />
@@ -123,7 +123,6 @@ class Chatbook extends Component {
 const mapStateToProps = (state) => {
   return {
     userId: state.user.userId,
-    socketDisconnected: state.socket.socketDisconnected,
   };
 };
 

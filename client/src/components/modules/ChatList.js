@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
 import SingleUser from "./SingleUser.js";
 
 import "./SingleUser.css";
@@ -9,6 +10,7 @@ import "./SingleUser.css";
  * Proptypes
  * @param {UserObject[]} users to display
  * @param {UserObject} active user in chat
+ * @param {(UserObject) => ()} setActiveUser function that takes in user, sets it to active
  */
 class ChatList extends Component {
   constructor(props) {
@@ -34,4 +36,10 @@ class ChatList extends Component {
   }
 }
 
-export default ChatList;
+const mapStateToProps = (state) => {
+  return {
+    userId: state.user.userId,
+  };
+};
+
+export default connect(mapStateToProps)(ChatList);

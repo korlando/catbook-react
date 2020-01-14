@@ -11,7 +11,6 @@ import { get } from "../utilities";
 import { socket } from "../client-socket.js";
 
 import * as userActions from "../actions/userActions";
-import * as socketActions from "../actions/socketActions";
 
 // to use styles, import the necessary CSS files
 import "../utilities.css";
@@ -24,10 +23,6 @@ class App extends Component {
   // makes props available in this component
   constructor(props) {
     super(props);
-    this.state = {
-      userId: undefined,
-      socketDisconnected: false,
-    };
   }
 
   componentDidMount() {
@@ -36,9 +31,6 @@ class App extends Component {
         // they are registed in the database, and currently logged in.
         this.props.updateUserId(user._id);
       }
-    });
-    socket.on("forceDisconnect", () => {
-      this.props.updateSocketDisconnected(true);
     });
   }
 
@@ -70,7 +62,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     updateUserId: (userId) => dispatch(userActions.updateUserId(userId)),
-    updateSocketDisconnected: (socketDisconnected) => dispatch(socketActions.updateSocketDisconnected(socketDisconnected)),
   };
 };
 
