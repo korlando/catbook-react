@@ -1,4 +1,4 @@
-# catbook-react
+# catbook-redux
 
 ## start up
 
